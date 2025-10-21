@@ -1,0 +1,155 @@
+---
+title: "Wait, measles is still a thing?"
+author: "Lauren Mello"
+date: "10/18/2025"
+output: 
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    code_download: true
+---
+
+
+```{r, warning = FALSE, message = FALSE, include=FALSE}
+# Load any R Packages you may need
+library(tidyverse)
+library(ggplot2)
+library(mosaic)
+library(mdsr)
+library(plotly)
+library(knitr)
+# Option 1: tidytuesdayR R package 
+
+
+tuesdata <- tidytuesdayR::tt_load('2025-06-24')
+## OR
+tuesdata <- tidytuesdayR::tt_load(2025, week = 25)
+
+cases_month <- tuesdata$cases_month
+cases_year <- tuesdata$cases_year
+
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+# Load any datasets you may need
+
+```
+
+```{r, echo=FALSE, fig.cap= "Source: BBC", out.width = '100%'}
+knitr::include_graphics("measlespic.png")
+```
+
+# Measles never really left...
+### Let's talk about it!
+
+The most you probably now hear about measles now is in relation to vaccinations. In 2000, the United States had actually declared measles eliminated (for reference, this means that the disease had not spread for over 12 months, not that the diseases simply stopped existing). Believe it or not, measles is on the rise in the US! 
+```{r, echo = FALSE, warning = FALSE, message = FALSE, include=FALSE}
+usa_cases_month <- filter(cases_month, country == "United States of America")
+
+usa_cases_month_2025 <- filter(cases_month, country == "United States of America", year == 2025)
+
+usa_cases_month_2024 <- cases_month %>%
+  filter(country == "United States of America",year == 2024, month %in% 1:6)
+
+usa_cases_year <- filter(cases_year, country == "United States of America")
+
+#i just realized that the data point for 2015 is missing so i'm going to add it
+
+
+new_usa_cases_year <- usa_cases_year[1,]
+new_usa_cases_year[] <- NA
+new_usa_cases_year$year <- 2015
+new_usa_cases_year$measles_total <- 191
+usa_cases_year <- rbind(usa_cases_year, new_usa_cases_year)
+ggplot(data = cases_year)
+View(usa_cases_year)
+```
+
+# How is measles looking in recent years?
+```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.cap="Data source: TidyTuesday dataset (Week 25, 2025), originally from the World Health Organization"}
+p1 <- ggplot(usa_cases_year, aes(x = year, y = measles_total)) +
+  geom_line(color = "cornflowerblue", size = 1.3) +
+  geom_point(color = "darkgoldenrod1") +
+  labs(title = "Confirmed Measles Cases in the USA by Year", subtitle = "Nationally reported cases", x = "Year", y = "Total # of Measles Cases", caption = "Data source: TidyTuesday dataset (Week 25, 2025), originally from the World Health Organization")+
+    geom_smooth(method = "loess", se = FALSE, color = "black")+
+  theme_minimal(base_family = "Times New Roman") +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12, color = "gray40"),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.caption = element_text(size = 9, color = "gray50"))
+
+ggplotly(p1)
+```
+
+## What does this mean? 
+The yellow dots indicate the total number of confirmed measles cases each year. The blue lines connect these yearly totals together and the black line is simply an overall trend line. I used different colors to differentiate between the graph itself and the trend line. I used geom_point yellow dots make it easier to identify peaks. The x-axis indicates the year and shows the passage of time, and the x-axis indicates the total number of measles cases reported for said year. I chose geom_line because I thought it would be the easiest way to interpret data. Especially since measles is an issue that can affect anyone, I wanted the graph to be clear and easy to understand- something like a violin plot might be a bit more intimidating to someone who isn't already familiar with it. The pattern clearly indicates that the United States is facing its first major measles outbreak since 2019. It's hard to pin this increasing rate on a particular reason, but this positive pattern can be partially attributed to:
+
+- Increasing anti-vaccination sentiments
+- Resumed international travel
+- Post-pandemic behavior shifts back to (somewhat) normalcy 
+
+# Let's take an even closer look!
+ 
+```{r, echo = FALSE, warning = FALSE, message = FALSE, include=FALSE}
+#cases per month in usa in 2025 (first 6 months)
+ggplot(usa_cases_month_2025, aes(x=as.factor(month), y= measles_total))+
+geom_point(size = 2)
+
+#first 6 months of 2024 to make a comparison
+usa_cases_month_2024
+
+usa_cases_month_2024 <- cases_month %>%
+  filter(country == "United States of America",year == 2024, month %in% 1:6)
+
+
+#cases per month in usa 2025 vs 2024 (first 6 months only)
+usa_compare_6mon <- rbind(usa_cases_month_2024, usa_cases_month_2025)
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.cap="Data source: TidyTuesday dataset (Week 25, 2025), originally from the World Health Organization"}
+p2 <- ggplot(usa_compare_6mon, aes(x = factor(month), y = measles_total, color = factor(year))) +
+  geom_point(size = 2, position = position_jitter(width = 0.1)) +
+  geom_line(aes(group = year), size = 1, alpha = 0.7)+
+  labs(title = "Measles Cases in the USA (Jan–Jun, 2024 vs 2025)", x = "Month", y = "Measles Cases", color = "Year", caption = "Data source: TidyTuesday dataset (Week 25, 2025), originally from the World Health Organization") +
+  scale_color_manual(values = c("2024" = "cornflowerblue", "2025" = "darkgoldenrod1")) +
+  scale_x_discrete(labels = month.abb[1:6])+
+  theme_minimal(base_family = "Times New Roman")+
+  theme(plot.title = element_text(size = 16, face = "bold"), axis.title = element_text(size = 12), axis.text = element_text(size = 10))
+
+ggplotly(p2)
+``` 
+
+## What does this comparison reveal?
+In this graph, 2024 is mapped in blue, and 2025 is mapped in yellow. The x-axis indicates month and shows time passing, and the y-axis represents the amount of confirmed measles cases for each respective month. I chose geom_point again because I thought it was very clear and easy to comprehend. I also added position_jitter so that the points that are close together (January + June) don't sit completely ontop of each other. I used scale_color_manual because I wanted to use the same colors I used in the previous graph for consistency. I also used scale_x_discrete because I found the month abbreviations more clear than just labeling them numerically. I used the theme feature to make the graph look prettier and more neat.  It is important to note that so far, the information for 2025 only goes to June- therefore a complete conclusion about the total measles cases in 2024 vs. 2025 cannot be completely made. That being said, it is still evident that 2025 has more measles cases than 2024, especially from February to May. In March of 2025, the number of cases is 6.5% greater than the prior year. Measles is undoubtably on the rise, and the prior graph indicates that in the following months, it will continue to increase if there is not immediate and effective intervention. Increases in measles in 2025 vs. 2024 could be the result of: 
+
+- Increased travel which brings cases into the United States
+- A new Presidential administration which questions the legitimacy/effectiveness of vaccines
+- Decrease in herd immunity: Less people are getting vaccinated 
+
+# Ok, measles is certaintly on the rise...
+## It's time for a change. 
+The pattern we are seeing is certainly a dangerous one. In the United States, measles is typically brought via tourism, but stays due to the disease spreading in un-vaccinated communities. Since the United States has left the WHO (officially effective January 22, 2026), it has added additional barriers to monitoring world health crises, which in turn, effect the United States. To prevent a nationwide epidemic, some steps to take include:
+
+- Squashing false information about the MMR (measles, mumps, varicella) vaccine: years of scientific research certify that the MMR vaccine is effective in preventing infection
+- Spreading awareness to smaller/more remote communities about the importance of herd immunity
+- United States involvement in aiding world health crises
+
+*Thank you!*
+
+
+# **Works Cited** 
+
+https://www.cdc.gov/measles/data-research/index.html 
+
+https://www.nejm.org/doi/full/10.1056/NEJMra2504516 
+
+https://publichealth.jhu.edu/2025/the-consequences-of-the-us-withdrawal-from-the-who
+
+https://www.bbc.com/news/health-50251259 
+
+https://github.com/rfordatascience/tidytuesday 
+
+
+
